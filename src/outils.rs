@@ -35,15 +35,16 @@ pub fn dec_vers_bin(mut nombre: usize) -> [usize; 8] {
 pub async fn ouvrir_fichier(nom: &str, fenetre_principale: &ApplicationWindow) -> Result<File, Error> {
     let filtre = FileFilter::new();
     filtre.add_pixbuf_formats();
+    filtre.set_name(Some("Fichier image"));
 
-    let filtres = FilterListModel::builder()
+    let _filtres = FilterListModel::builder()
         .filter(&filtre)
         .build();
 
     loop {
         match FileDialog::builder()
             .title(nom)
-            .filters(&filtres)
+            //.filters(&filtres)
             .default_filter(&filtre)
             .build()
             .open_future(Some(fenetre_principale))

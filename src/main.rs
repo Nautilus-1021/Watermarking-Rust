@@ -1,7 +1,9 @@
+#![windows_subsystem = "windows"]
+
 use gtk::gdk_pixbuf::{Pixbuf, Colorspace};
 use gtk::gio::FileCreateFlags;
 use gtk::glib::{clone, MainContext, PRIORITY_DEFAULT, Bytes};
-use gtk::{glib, gio, ApplicationWindow, AlertDialog, Button, Application, Box, Orientation};
+use gtk::{glib, gio, ApplicationWindow, AlertDialog, Button, Application, Box, Orientation, Image, IconTheme};
 
 use gtk::gio::prelude::*;
 use gtk::prelude::*;
@@ -58,11 +60,15 @@ fn build_ui(app: &Application) {
         .child(&container)
         .build();
 
-    /*let widg_icone = Image::builder()
-        .resource("/fr/flyingdev/watermarking/icone/256x256/wat.png")
+    let icones = IconTheme::for_display(&WidgetExt::display(&fenetre));
+    icones.add_resource_path("/fr/flyingdev/watermarking/hicolor/256x256/apps/");
+    fenetre.set_icon_name(Some("wat.png"));
+
+    let widg_icone = Image::builder()
+        .resource("/fr/flyingdev/watermarking/hicolor/256x256/apps/wat.png")
         .build();
 
-    container.append(&widg_icone);*/
+    container.append(&widg_icone);
 
     let bouton_encodage = Button::builder()
         .label("Encoder")
@@ -74,14 +80,12 @@ fn build_ui(app: &Application) {
 
     container.append(&bouton_encodage);
 
-    let window_ptr = fenetre.clone();
-    bouton_encodage.connect_clicked(move |_| {
+    bouton_encodage.connect_clicked(clone!(@strong fenetre => move |_| {
         let maincontext = MainContext::default();
-        maincontext.spawn_local(clone!(@strong window_ptr => async move {
-            encoder(&window_ptr).await
+        maincontext.spawn_local(clone!(@strong fenetre => async move {
+            encoder(&fenetre).await
         }));
-        // encoder(&window);
-    });
+    }));
 
     let bouton_decodage = Button::builder()
         .label("Décoder")
@@ -93,13 +97,12 @@ fn build_ui(app: &Application) {
 
     container.append(&bouton_decodage);
 
-    let window_ptr = fenetre.clone();
-    bouton_decodage.connect_clicked(move |_| {
+    bouton_decodage.connect_clicked(clone!(@strong fenetre => move |_| {
             let maincontext = MainContext::default();
-            maincontext.spawn_local(clone!(@strong window_ptr => async move {
-                decoder(&window_ptr).await;
+            maincontext.spawn_local(clone!(@strong fenetre => async move {
+                decoder(&fenetre).await;
             }));
-        });
+        }));
 
     // Present window
     fenetre.present();
@@ -125,15 +128,7 @@ async fn encoder(fenetre_principale: &ApplicationWindow) {
             return;
         }
     };
-    let image_invite = PixelBuffer::from(match Pixbuf::from_stream_future(&fichier_image_invite.read_future(PRIORITY_DEFAULT).await.unwrap()).await {
-        Ok(val) => {
-            val
-        }
-        Err(msg) => {
-            println!("Err: {msg}");
-            Pixbuf::new(Colorspace::Rgb, false, 8, 100, 100).unwrap()
-        }
-    });
+    let image_invite = PixelBuffer::from(Pixbuf::from_stream_future(&fichier_image_invite.read_future(PRIORITY_DEFAULT).await.unwrap()).await.unwrap_or(Pixbuf::new(Colorspace::Rgb, false, 8, 100, 100).unwrap()));
 
     let fichier_image_hote = match outils::ouvrir_fichier("Ouvrir l'image qui va cacher la première image", fenetre_principale).await {
         Ok(fichier) => {
@@ -144,15 +139,7 @@ async fn encoder(fenetre_principale: &ApplicationWindow) {
         }
     };
     
-    let image_hote = PixelBuffer::from(match Pixbuf::from_stream_future(&fichier_image_hote.read_future(PRIORITY_DEFAULT).await.unwrap()).await {
-        Ok(val) => {
-            val
-        }
-        Err(msg) => {
-            println!("Err: {msg}");
-            Pixbuf::new(Colorspace::Rgb, false, 8, 1000, 1000).unwrap()
-        }
-    });
+    let image_hote = PixelBuffer::from(Pixbuf::from_stream_future(&fichier_image_hote.read_future(PRIORITY_DEFAULT).await.unwrap()).await.unwrap_or(Pixbuf::new(Colorspace::Rgb, false, 8, 1000, 1000).unwrap()));
 
     if image_invite.width * image_invite.height + 2 > image_hote.height * image_hote.width {
         AlertDialog::builder()
@@ -235,7 +222,7 @@ async fn encoder(fenetre_principale: &ApplicationWindow) {
                 } else {
                     compteur_octet = 1;
                 }
-            } else if compteur_octet2 > 3 {
+            } else if compteur_octet2 > 3 && image_invite.n_channels > 3 {
                 passer_octet2 = true;
                 compteur_octet2 = image_invite.n_channels - 3;
             }
