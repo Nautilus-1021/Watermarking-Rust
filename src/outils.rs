@@ -1,6 +1,6 @@
 use gtk::glib::{Error, FileError};
-use gtk::{ApplicationWindow, FileFilter, FilterListModel, FileDialog, AlertDialog};
-use gtk::gio::File;
+use gtk::{ApplicationWindow, FileFilter, FileDialog, AlertDialog};
+use gtk::gio::{File, ListStore};
 
 pub fn bin_vers_dec(bits: [u8; 8]) -> u8 {
     let mut nombre = 0u8;
@@ -35,16 +35,14 @@ pub fn dec_vers_bin(mut nombre: usize) -> [usize; 8] {
 pub async fn ouvrir_fichier(nom: &str, fenetre_principale: &ApplicationWindow) -> Result<File, Error> {
     let filtre = FileFilter::new();
     filtre.add_pixbuf_formats();
-    filtre.set_name(Some("Fichier image"));
 
-    let _filtres = FilterListModel::builder()
-        .filter(&filtre)
-        .build();
+    let filtres = ListStore::new::<FileFilter>();
+    filtres.append(&filtre);
 
     loop {
         match FileDialog::builder()
             .title(nom)
-            //.filters(&filtres)
+            .filters(&filtres)
             .default_filter(&filtre)
             .build()
             .open_future(Some(fenetre_principale))
@@ -74,13 +72,22 @@ pub async fn ouvrir_fichier(nom: &str, fenetre_principale: &ApplicationWindow) -
     return Err(Error::new(FileError::Failed, "Abandon de l'utilisateur"))
 }
 
-pub async fn sauvegarder_fichier(nom: &str, fenetre_principale: &ApplicationWindow) -> Result<File, Error> {
+pub async fn sauvegarder_fichier(nom: &str, fenetre_principale: &ApplicationWindow, restreindre_png: bool) -> Result<File, Error> {
+    let filtres = ListStore::new::<FileFilter>();
+
     let filtre = FileFilter::new();
     filtre.add_suffix("png");
+    filtre.set_name(Some("Images PNG"));
 
-    let filtres = FilterListModel::builder()
-        .filter(&filtre)
-        .build();
+    filtres.append(&filtre);
+
+    if !restreindre_png {
+        let filtre_rien = FileFilter::new();
+        filtre_rien.add_pattern("*.*");
+        filtre_rien.set_name(Some("Tout les fichiers"));
+
+        filtres.append(&filtre_rien);
+    }
 
     match FileDialog::builder()
         .title(nom)
@@ -88,11 +95,22 @@ pub async fn sauvegarder_fichier(nom: &str, fenetre_principale: &ApplicationWind
         .build()
         .save_future(Some(fenetre_principale))
         .await {
-        Ok(fichier) => {
-            Ok(fichier)
+        Ok(file) => {
+            Ok(file)
         }
         Err(msg) => {
             Err(msg)
         }
+    }
+}
+
+pub fn modifier_composante(composante: &mut u8, bit: usize) {
+    if *composante == 255 {
+        *composante = 254;
+    }
+    if *composante % 2 == 0 && bit == 1 {
+        *composante = *composante + 1;
+    } else if *composante % 2 == 1 && bit == 0 {
+        *composante = *composante + 1;
     }
 }
