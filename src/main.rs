@@ -25,19 +25,20 @@ fn main() -> glib::ExitCode {
 }
 
 fn build_ui(app: &Application) {
-    // Create a button with label and margins
+    // Création du conteneur principal de l'interface
     let container = Box::builder()
         .homogeneous(true)
         .orientation(Orientation::Vertical)
         .build();
 
-    // Create a window
+    // Création de la fenêtre
     let fenetre = ApplicationWindow::builder()
         .application(app)
         .title("Watermarking")
         .child(&container)
         .build();
 
+    // Création d'un bouton
     let bouton_encodage = Button::builder()
         .label("Encoder")
         .margin_top(12)
@@ -48,6 +49,7 @@ fn build_ui(app: &Application) {
 
     container.append(&bouton_encodage);
 
+    // Ajout d'un callback pour quand le bouton sera cliqué
     bouton_encodage.connect_clicked(clone!(@strong fenetre, @strong app => move |_| {
         let maincontext = MainContext::default();
         maincontext.spawn_local(clone!(@strong fenetre, @strong app => async move {
@@ -100,6 +102,7 @@ fn build_ui(app: &Application) {
         }));
     }));
 
+    // Même chose avec le bouton pour décoder
     let bouton_decodage = Button::builder()
         .label("Décoder")
         .margin_top(12)
@@ -145,6 +148,6 @@ fn build_ui(app: &Application) {
             }));
         }));
 
-    // Present window
+    // Afficher la fenêtre
     fenetre.present();
 }
