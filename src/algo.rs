@@ -14,11 +14,15 @@ pub struct PixelBuffer {
 }
 
 impl PixelBuffer {
-    fn get_pixel(&self, x: usize, y: usize) -> Result<[u8; 3], &str> {
+    fn get_pixel(&self, x: usize, y: usize) -> Result<[u8; 4], &str> {
         if x > self.width || y > self.height {
             return Err("Coordinates are out of the buffer !")
         }
-        Ok([u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels)]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 1]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 2])])
+        if self.n_channels == 3 {
+            Ok([u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels)]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 1]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 2]), 0])
+        } else {
+            Ok([u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels)]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 1]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 2]), u8::from(self.buffer[(y * self.rowstride) + (x * self.n_channels) + 3])])
+        }
     }
 }
 
@@ -31,7 +35,7 @@ impl From<Pixbuf> for PixelBuffer {
 pub async fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> PixelBuffer {
     let mut etat_pixel = 0u8;
 
-    let mut pixel_actif_sur_hote = [0u8; 3];
+    let mut pixel_actif_sur_hote = [0u8; 4];
 
     let mut hote_x = 0usize;
     let mut hote_y = 0usize;
@@ -49,7 +53,7 @@ pub async fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> Pixe
             } else if etat_pixel == 2 {
                 modifier_composante(&mut pixel_actif_sur_hote[2], bit);
                 etat_pixel = 0;
-                image_hote.pixbuf.put_pixel(hote_x.try_into().unwrap(), hote_y.try_into().unwrap(), pixel_actif_sur_hote[0], pixel_actif_sur_hote[1], pixel_actif_sur_hote[2], 0);
+                image_hote.pixbuf.put_pixel(hote_x.try_into().unwrap(), hote_y.try_into().unwrap(), pixel_actif_sur_hote[0], pixel_actif_sur_hote[1], pixel_actif_sur_hote[2], pixel_actif_sur_hote[3]);
                 hote_x += 1;
                 if hote_x > image_hote.width - 1 {
                     hote_y += 1;
@@ -86,7 +90,7 @@ pub async fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> Pixe
                 } else if etat_pixel == 2 {
                     modifier_composante(&mut pixel_actif_sur_hote[2], bit);
                     etat_pixel = 0;
-                    image_hote.pixbuf.put_pixel(hote_x.try_into().unwrap(), hote_y.try_into().unwrap(), pixel_actif_sur_hote[0], pixel_actif_sur_hote[1], pixel_actif_sur_hote[2], 0);
+                    image_hote.pixbuf.put_pixel(hote_x.try_into().unwrap(), hote_y.try_into().unwrap(), pixel_actif_sur_hote[0], pixel_actif_sur_hote[1], pixel_actif_sur_hote[2], pixel_actif_sur_hote[3]);
                     hote_x += 1;
                     if hote_x > image_hote.width - 1 {
                         hote_y += 1;
