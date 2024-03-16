@@ -1,11 +1,13 @@
 #![windows_subsystem = "windows"]
 
-use gtk::gdk_pixbuf::{Pixbuf, Colorspace};
-use gtk::gio::FileCreateFlags;
-use gtk::glib::{clone, MainContext, Priority};
-use gtk::{glib, ApplicationWindow, AlertDialog, Button, Application, Box, Orientation};
+use gtk::{glib, gdk_pixbuf, gio};
 
-use gtk::gio::prelude::*;
+use gdk_pixbuf::{Pixbuf, Colorspace};
+use gio::FileCreateFlags;
+use glib::{clone, Priority};
+use gtk::{ApplicationWindow, AlertDialog, Button, Application, Box, Orientation};
+
+use gio::prelude::*;
 use gtk::prelude::*;
 
 mod outils;
@@ -51,8 +53,7 @@ fn build_ui(app: &Application) {
 
     // Ajout d'un callback pour quand le bouton sera cliqué
     bouton_encodage.connect_clicked(clone!(@strong fenetre, @strong app => move |_| {
-        let maincontext = MainContext::default();
-        maincontext.spawn_local(clone!(@strong fenetre, @strong app => async move {
+        glib::spawn_future_local(clone!(@strong fenetre, @strong app => async move {
             let fichier_image_invite = match ouvrir_fichier("Ouvrir l'image à encoder", &fenetre).await {
                 Ok(fichier) => {
                     fichier
@@ -114,8 +115,7 @@ fn build_ui(app: &Application) {
     container.append(&bouton_decodage);
 
     bouton_decodage.connect_clicked(clone!(@strong fenetre => move |_| {
-            let maincontext = MainContext::default();
-            maincontext.spawn_local(clone!(@strong fenetre => async move {
+            glib::spawn_future_local(clone!(@strong fenetre => async move {
                 let image_a_decrypter = PixelBuffer::from(Pixbuf::from_stream_future(&ouvrir_fichier("Ouvrir le fichier à décoder", &fenetre).await.unwrap().read_future(Priority::DEFAULT).await.unwrap()).await.unwrap());
 
                 let result = algo::decoder(image_a_decrypter).await;

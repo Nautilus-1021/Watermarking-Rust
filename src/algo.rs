@@ -1,5 +1,7 @@
-use gtk::gdk_pixbuf::{Pixbuf, Colorspace};
-use gtk::glib::Bytes;
+use gtk::{glib, gdk_pixbuf};
+
+use gdk_pixbuf::{Pixbuf, Colorspace};
+use glib::Bytes;
 
 use crate::outils::{dec_vers_bin, bin_vers_dec, modifier_composante};
 

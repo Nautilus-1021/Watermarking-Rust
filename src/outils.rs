@@ -1,6 +1,8 @@
-use gtk::glib::{Error, FileError};
+use gtk::{gio, glib};
+
+use glib::{Error, FileError};
+use gio::{File, ListStore};
 use gtk::{ApplicationWindow, FileFilter, FileDialog, AlertDialog};
-use gtk::gio::{File, ListStore};
 
 pub fn bin_vers_dec(bits: [u8; 8]) -> u8 {
     let mut nombre = 0u8;
