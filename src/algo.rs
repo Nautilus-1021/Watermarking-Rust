@@ -34,7 +34,7 @@ impl From<Pixbuf> for PixelBuffer {
     }
 }
 
-pub async fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> PixelBuffer {
+pub fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> PixelBuffer {
     let mut etat_pixel = 0u8;
 
     let mut pixel_actif_sur_hote = [0u8; 4];
@@ -137,7 +137,7 @@ pub async fn encoder(image_invite: PixelBuffer, image_hote: PixelBuffer) -> Pixe
     image_hote
 }
 
-pub async fn decoder(image_a_decrypter: PixelBuffer) -> PixelBuffer {
+pub fn decoder(image_a_decrypter: PixelBuffer) -> PixelBuffer {
     let mut octet_actif = [0u8; 8];
     let mut compteur_bits = 0usize;
     let mut compteur_taille_image = 0usize;
